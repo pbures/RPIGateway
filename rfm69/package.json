@@ -1,0 +1,65 @@
+{
+  "name": "rfm69",
+  "version": "0.1.0",
+  "description": "Node module for interfacing with HopeRF RFM69 modules on a Raspberry Pi",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha",
+    "test:e2e": "mocha ./test/e2e.js",
+    "test:mock": "mocha ./test/mock.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dconstructing/rfm69.git"
+  },
+  "keywords": [
+    "HopeRF",
+    "RFM69",
+    "RFM69W",
+    "RFM69HW",
+    "SPI"
+  ],
+  "author": {
+    "name": "David Cox",
+    "email": "losttime.shuffle@gmail.com"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dconstructing/rosie/issues"
+  },
+  "homepage": "https://github.com/dconstructing/rosie",
+  "dependencies": {
+    "onoff": "^1.0.2",
+    "pi-spi": "^1.0.0"
+  },
+  "devDependencies": {
+    "mocha": "^2.2.4"
+  },
+  "gitHead": "5a5e097cde422b41adf66625a7351637f98b63f4",
+  "_id": "rfm69@0.1.0",
+  "_shasum": "b1de5dfa4a76b386db6f020e2ee646b40aafba01",
+  "_from": "rfm69@",
+  "_npmVersion": "2.14.7",
+  "_nodeVersion": "4.2.3",
+  "_npmUser": {
+    "name": "losttime",
+    "email": "losttime.shuffle@gmail.com"
+  },
+  "dist": {
+    "shasum": "b1de5dfa4a76b386db6f020e2ee646b40aafba01",
+    "tarball": "https://registry.npmjs.org/rfm69/-/rfm69-0.1.0.tgz"
+  },
+  "maintainers": [
+    {
+      "name": "losttime",
+      "email": "losttime.shuffle@gmail.com"
+    }
+  ],
+  "_npmOperationalInternal": {
+    "host": "packages-6-west.internal.npmjs.com",
+    "tmp": "tmp/rfm69-0.1.0.tgz_1456111806631_0.5865422571077943"
+  },
+  "directories": {},
+  "_resolved": "https://registry.npmjs.org/rfm69/-/rfm69-0.1.0.tgz",
+  "readme": "ERROR: No README data found!"
+}
