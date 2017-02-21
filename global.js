@@ -43,6 +43,7 @@ rfm69.onReady = function() {
 rfm69.onMessage = function(buffer) {
     //console.log('received message :[' + buffer.message.toString() + ']');
     //console.log('received message :' + JSON.stringify(buffer));
+    rfm69.sendAck(function(){});
     this.emitter.emit('message', buffer);
 };
 

@@ -89,7 +89,7 @@ RFM69.prototype.setEncryptionKey = function(key, callback) {
 		// 3E through 4D
 		bytes.write(key, 0, key.length);
 		console.log("Setting encryption.");
-			
+
 		this._setRegister(REG_PACKET_CONFIG_2, parseInt('00010011', 2));
 	}
 	for (var i = 0; i < bytes.length; i++) {
@@ -583,6 +583,104 @@ RFM69.prototype._attemptSend = function(buffer, callback) {
 		}
 	});
 };
+
+RFM69.prototype.sendAck = function(callback) {
+	var scope = this;
+
+	scope.standbyMode(function standbyBeforeSendCallback(err, data) {
+		if (err) {
+			console.error('Send Ack attempt failed when switching to standby mode', err);
+			// should probably revert standby mode
+			callback(err, data);
+		} else {
+			scope.doAfterReady(function sendAfterStandbyModeCallback() {
+				// Set the DIOx Mapping so the interrupt means "PacketSent" once switched to Transmit Mode (pg 48)
+				scope.setRegister(REG_DIO_MAPPING_1, 0x00, function sendSetRegisterCallback(err, data) { // 0x25
+					if (err) {
+						console.error('Error setting DIO Mapping before send Ack', err);
+						// should probably revert the setup we've done
+						callback(err, data);
+					} else {
+						var payload = scope.config.prepareAckPayload();
+						if (scope.verbose) {
+							console.log('Going to transfer Ack:', payload);
+						}
+						scope._transfer(payload, function sendTransferCallback(error, data) {
+
+							if (error) {
+								console.error('Send attempt failed while transferring', error);
+								callback(error, data);
+							} else {
+
+								if (scope.verbose) {
+									console.log('transferred', payload, 'and got', data);
+								}
+
+								var sentTimeout = setTimeout(function postSendInterruptTimeoutCallback() {
+									console.warn('Ack send timed out', payload, data);
+									sentTimeout = null;
+									callback(new Error('Ack send timed out'));
+									scope.interruptListeners[0x04] = [];
+									scope.interruptListeners[0x08] = [];
+								}, 2000);
+
+								scope.doAfterInterrupt(0x08, function sendInterruptCallback() {
+									if (scope.verbose) {
+										console.log('Ack send attempt post interrupt');
+									}
+
+									clearTimeout(sentTimeout);
+									sentTimeout = null;
+
+									scope.standbyMode(function standbyAfterSendInterruptCallback(err, data) {
+										if (err) {
+											console.error('Error switching to standby mode after send interrupt');
+										}
+
+									  /* Not sure what this does, disabling
+										if (typeof scope.config.payloadSent === 'function') {
+											if (scope.verbose) {
+												console.log('custom payload handler');
+											}
+											scope.config.payloadSent(buffer, callback);
+										}*/
+
+										// Set the DIOx Mapping so the interrupt means "PayloadReady" once switched to Receive Mode (pg 48)
+										scope.setRegister(REG_DIO_MAPPING_1, 0x40, function sendSetRegisterCallback(err, data) { // 0x25
+											if (err) {
+												console.error('Error setting DIO Mapping after send', err);
+											}
+											scope.receiveMode(function(err, data) {
+												if (err) {
+													console.error('Failed while switching to receive mode after Ack transmit', err);
+												} else {
+													if (scope.verbose) {
+														console.log('Switched to receive mode after Ack transmit');
+													}
+												}
+											});
+										});
+									});
+								});
+
+								scope.transmitMode(function sendTransmitModeCallback(err, data) {
+									if (err) {
+										console.error('Send attempt failed while switching to transmit mode', err);
+									} else {
+										if (scope.verbose) {
+											console.log('transmit initiated');
+										}
+									}
+								});
+							}
+						});
+					}
+				});
+			});
+		}
+	});
+};
+
 
 RFM69.prototype.readRegister = function(address, callback) {
 	var scope = this;
