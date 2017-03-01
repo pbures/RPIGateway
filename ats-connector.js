@@ -11,7 +11,8 @@ function AtsConnector(clientId, clientKey){
 	this._sensors = {
         7: {
 		    temperature: 'jdJCtJrZK7IakZIPSIC2ro3c',
-		    humidity: 'sBVXMTrrPKhig2X3pOMjQ4iz'
+		    humidity: 'sBVXMTrrPKhig2X3pOMjQ4iz',
+		    batteryPct: 'Y2Q2t4Xbk65nKX6jcgo4eejw'
 	    }
     };
 
@@ -26,7 +27,7 @@ AtsConnector.prototype.parseMessage = function(buffer) {
     var message = buffer.message.toString();
     var senderId = buffer.senderId;
 
-	var re  = /T\[(\+\d+\.?\d*)\] H\[(\+\d+\.?\d*)\]/;
+	var re  = /T\[(\+\d+\.?\d*)\] H\[(\+\d+\.?\d*)\] B\[(\d+)\]/;
 	var arr = re.exec(message);
 	var data = {};
 
@@ -36,7 +37,8 @@ AtsConnector.prototype.parseMessage = function(buffer) {
 		return {
 			id:senderId,
 			temperature:parseFloat(arr[1]),
-			humidity:parseFloat(arr[2])
+			humidity:parseFloat(arr[2]),
+			batteryPct:parseInt(arr[3],10)
 		};
 	}  else {
 			return undefined;
