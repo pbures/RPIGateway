@@ -242,7 +242,7 @@ RFM69.prototype.changeMode = function(desiredMode, callback) {
 	var scope = this;
 	scope.detectMode(function changeModeDetectCallback(currentMode) {
 		if (scope.verbose) {
-			console.log('mode detected', currentMode);
+			console.log('mode detected', currentMode.toString(2));
 		}
 		var newMode = (currentMode & parseInt('11100011', 2)) | desiredMode;
 		scope.setRegister(REG_OP_MODE, newMode, function changeModeSetRegisterCallback(err, data) {
@@ -433,6 +433,7 @@ RFM69.prototype.interrupted = function(value) {
 						console.error('Error reading payload headers', err);
 						return;
 					}
+
 					var payloadLength = headerData[1];
 					var payload = [(REG_FIFO & 0x7F)];
 					for (var i = 0; i < payloadLength; i++) {
@@ -444,6 +445,7 @@ RFM69.prototype.interrupted = function(value) {
 							console.error('Error reading payload body', err);
 							return;
 						}
+
 						var modifiedPayload = payloadData.slice(1);
 
 						if (scope.verbose) {
@@ -453,6 +455,16 @@ RFM69.prototype.interrupted = function(value) {
 						if (scope.config.handlePayload) {
 							modifiedPayload = scope.config.handlePayload(modifiedPayload);
 						}
+
+						//console.log("modifiedPayload: " + JSON.stringify(modifiedPayload));
+
+						//TODO: Send ACK if requested.
+						//Probably implement standalone method in config.
+						//
+						//if (modifiedPayload.requestedAck) {
+						//	scope.send(new Buffer([]), true, function(){});	
+						//}
+
 						if (modifiedPayload) {
 							scope.receiveHandler(modifiedPayload);
 						}
@@ -498,6 +510,7 @@ RFM69.prototype.send = function(buffer, callback) {
 };
 RFM69.prototype._attemptSend = function(buffer, callback) {
 	var scope = this;
+
 	scope.standbyMode(function standbyBeforeSendCallback(err, data) {
 		if (err) {
 			console.error('Send attempt failed when switching to standby mode', err);
@@ -513,6 +526,7 @@ RFM69.prototype._attemptSend = function(buffer, callback) {
 						callback(err, data);
 					} else {
 						var payload = scope.config.preparePayload(buffer);
+
 						if (scope.verbose) {
 							console.log('Going to transfer', payload);
 						}
@@ -586,6 +600,37 @@ RFM69.prototype._attemptSend = function(buffer, callback) {
 
 RFM69.prototype.sendAck = function(callback) {
 	var scope = this;
+	scope.detectMode(function sendDetectModeCallback(originalMode) {
+		originalMode = (originalMode & parseInt('00011100', 2));
+		if (scope.verbose) {
+			console.log('Original Mode detected', originalMode);
+		}
+		scope._attemptSendAck(function sendAttemptCallback(err, data) {
+			if (err) {
+				if (scope.verbose) {
+					console.error('Error sending to mote', err);
+				}
+			} else {
+				if (scope.verbose) {
+					console.log('send complete');
+				}
+			}
+			scope.changeMode(originalMode, function changeModeAfterSendCallback(err, data) {
+				if (err) {
+					console.error('Could not switch back to Original Mode after send attempt', err);
+				} else {
+					if (scope.verbose) {
+						console.log('Reset to Original Mode', originalMode);
+					}
+				}
+				callback(err, data);
+			});
+		});
+	});
+};
+
+RFM69.prototype._attemptSendAck = function(callback) {
+	var scope = this;
 
 	scope.standbyMode(function standbyBeforeSendCallback(err, data) {
 		if (err) {
@@ -605,6 +650,7 @@ RFM69.prototype.sendAck = function(callback) {
 						if (scope.verbose) {
 							console.log('Going to transfer Ack:', payload);
 						}
+
 						scope._transfer(payload, function sendTransferCallback(error, data) {
 
 							if (error) {
@@ -622,7 +668,7 @@ RFM69.prototype.sendAck = function(callback) {
 									callback(new Error('Ack send timed out'));
 									scope.interruptListeners[0x04] = [];
 									scope.interruptListeners[0x08] = [];
-								}, 2000);
+								}, 5000);
 
 								scope.doAfterInterrupt(0x08, function sendInterruptCallback() {
 									if (scope.verbose) {

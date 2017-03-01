@@ -5,6 +5,7 @@
  * :TernRefs
  * :C-x C-o (intellisense)
  */
+require('console-stamp')(console, '[HH:MM:ss.l]');
 
 var RFM69 = require('rfm69');
 var AtsConnector = require('./ats-connector');
@@ -43,8 +44,13 @@ rfm69.onReady = function() {
 rfm69.onMessage = function(buffer) {
     //console.log('received message :[' + buffer.message.toString() + ']');
     //console.log('received message :' + JSON.stringify(buffer));
-    rfm69.sendAck(function(){});
+    rfm69.sendAck(function(err, data){
+   	if(err) {
+	       console.log("Error sending ACK.");
+	}		
+    });
     this.emitter.emit('message', buffer);
+    //console.log("MSG: " + buffer.message.toString());
 };
 
 rfm69.initialize();
@@ -58,9 +64,9 @@ eventEmitter.on('message', function(buffer){
 
     console.log("Msg: [" + buffer.message.toString() + "]");
     var sensorDataJson = conn.parseMessage(buffer);
-    console.log(JSON.stringify(sensorDataJson));
 
     if (sensorDataJson) {
+	console.log("sendUpdate(...)");
         conn.sendUpdate(sensorDataJson, function(err, res, body) {
             if(err) {
                 console.log("Error sending update.");

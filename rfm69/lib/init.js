@@ -77,6 +77,13 @@ RFM69Accessor.prototype.send = function(message, callback) {
 		callback(err, data);
 	});
 };
+
+RFM69Accessor.prototype.sendAck = function(callback) {
+	var scope=this;
+	scope.listening = false;
+	this.rfm69.sendAck(callback);
+};
+
 RFM69Accessor.prototype.reset = function() {
 	this.ready = false;
 	this.rfm69.reset(this._configure.bind(this));

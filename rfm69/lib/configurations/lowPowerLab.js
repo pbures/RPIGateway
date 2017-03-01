@@ -15,7 +15,7 @@ var lplConfig = {
 		return Buffer.concat([new Buffer([(0x00 | 0x80), payload.length + 3, 0x11, 0x64, 0x40]), payload], (payload.length + 5));
 	},
 
-  prepareAckPayload: function() {
+	prepareAckPayload: function() {
 		return new Buffer([(0x00 | 0x80), 3, 0x7, 0x5, 0x80]);
 	},
 
@@ -75,7 +75,9 @@ var lplConfig = {
 		return {
 			message: message,
 			senderId: senderId,
-			targetId: targetId
+			targetId: targetId,
+			controlByte: controlByte,
+			requestedAck: ((controlByte & 0x40) ? true: false)
 		};
 	},
 
